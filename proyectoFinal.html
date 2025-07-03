@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Control</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+
+  <!-- Librerías externas -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/lib/sxlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: url('https://www.transparenttextures.com/patterns/stardust.png'),
+        linear-gradient(120deg, #0f2027, #203a43, #2c5364);
+      background-attachment: fixed;
+      background-size: cover;
+      color: #fff;
+    }
+
+    #loginScreen {
+      position: fixed; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(88, 87, 87, 0.482); z-index: 1000;
+    }
+    #loginScreen input { margin: 0.5rem; padding: 0.7rem 1rem; border-radius: 0.5rem; border: none; max-width: 250px; }
+    #loginScreen button { margin-top: 1rem; background: #00bcd4; color: white; font-weight: bold; padding: 0.7rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; }
+
+    .top-btn {
+      position: fixed; top: 10px; z-index: 10000; border: none; border-radius: 0.5rem;
+      padding: 0.6rem 1rem; font-weight: bold; cursor: pointer; color:#fff;
+    }
+    #logoutBtn { right: 10px; background: #ff5252; display:none; }
+    #changePasswordBtn { right: 120px; background:#2196f3; display:none; }
+    #changeOwnPassBtn { right: 250px; background:#ff9800; display:none; }
+
+    .container {
+      max-width: 1200px; margin: 2rem auto; background: rgba(28, 58, 113, 0.414); border-radius: 1rem;
+      padding: 2rem; box-shadow: 0 0 30px rgba(154, 148, 148, 0.451);
+    }
+    h1 { text-align: center; margin-bottom: 1.5rem; }
+    h2 { text-align: center; margin-bottom: 1.5rem; }
+
+    .form-group {
+      display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-bottom: 1rem;
+    }
+    .form-group input, .form-group button {
+      padding: 0.5rem; border-radius: 0.5rem; border: none;
+    }
+    .form-group input { width: 150px; }
+    .form-group button {
+      background-color: #00bbd47a; color:white; font-weight:bold; cursor:pointer;
+    }
+
+    table { width: auto; max-width: 100%; table-layout: auto; border-collapse: collapse; }
+    td {
+      background-color: #2a3b4c; /* Azul grisáceo oscuro, menos negro */
+      border: 1px solid #3f5871;
+      padding: 0.5rem;
+      color: white;
+      text-align: center;
+    }
+
+    th {
+      background-color: #30475e; /* Encabezado más claro, azul tech */
+      border: 1px solid #3f5871;
+      padding: 0.6rem;
+      color: white;
+      font-weight: bold;
+    }
+
+
+    tr:hover {
+      background-color: rgba(60, 48, 192, 0.878); /* Suave gris claro sobre oscuro */
+    }
+
+
+    .actions button {
+      background-color: #00bcd4;
+      border: none;
+      padding: 6px 10px;
+      color: white;
+      border-radius: 0.3rem;
+      transition: background-color 0.3s;
+    }
+
+    .actions button:hover {
+      background-color: #0097a7;
+    }
+
+    .fooster {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      font-size: 13px;
+      color: #fff;
+      background-color: rgba(0, 0, 0, 0.2); /* Fondo negro semitransparente */
+      padding: 6px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(4px); /* Efecto de desenfoque detrás */
+      -webkit-backdrop-filter: blur(4px); /* Compatibilidad Safari */
+      z-index: 100;
+    }
+
+
+    @media (max-width:600px){
+      .form-group{flex-direction:column; align-items:stretch;}
+      .form-group input{width:100%;}
+      table{font-size:0.8rem;}
+    }
+    
+      .contenedor-principal {
+      width: 100%;
+      max-width: 100%;
+      background-color: rgba(125, 124, 131, 0);
+      padding: 20px;
+      border-radius: 12px;
+      overflow-x: auto;
+      overflow-y: visible;
+      box-sizing: border-box;
+      margin-top: 10px;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Pantalla de Login -->
+  <div id="loginScreen">
+    <h2>Iniciar Sesión</h2>
+    <input type="text" id="usuario" placeholder="Usuario">
+    <input type="password" id="clave" placeholder="Contraseña">
+    <button onclick="login()">Entrar</button>
+  </div>
+
+
+  <button id="logoutBtn" class="top-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
+  <button id="changePasswordBtn" class="top-btn" onclick="mostrarCambioContrasena()">Cambiar Contraseña (lector)</button>
+  <button id="changeOwnPassBtn" class="top-btn" onclick="cambiarMiContrasena()">Mi Contraseña</button>
+
+ 
+  <div id="app" style="display:none">
+    <div class="container">
+      <h1>Control de actividades</h1>
+      <div class="form-group" id="formControls">
+        <input type="text" id="buscador" placeholder="Buscar..." oninput="buscarRegistros()">
+        <input type="text" id="nombre" placeholder="Nombre">
+        <input type="text" id="apellidoPaterno" placeholder="Apellido Paterno">
+        <input type="text" id="apellidoMaterno" placeholder="Apellido Materno">
+        <input type="text" id="ci" placeholder="C.I.">
+
+        <button onclick="agregarRegistro()">Agregar</button>
+        <button onclick="agregarColumna()">Nueva Columna</button>
+        <button onclick="exportarExcel()">Exportar Excel</button>
+      </div>
+      <div class="contenedor-principal"> 
+        <table id="tabla">
+          <thead><tr></tr></thead>
+          <tbody id="cuerpo"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class = "fooster">
+    <p>© Univ: Gonzalo 200084090</p> 
+    <p>© Univ: Camila 200084195</p>
+  </div>
+
+<script>
+  let usuarios = [
+    {usuario:'super', clave:'123', rol:'superadmin'},
+    {usuario:'admin', clave:'123', rol:'admin'},
+    {usuario:'lector', clave:'123', rol:'lector'}
+  ];
+
+  let usuarioActivo = null;
+  let datos = JSON.parse(localStorage.getItem('asistencias')) || [];
+  let columnasExtras = JSON.parse(localStorage.getItem('columnasExtras')) || ['Actividad 1'];
+  const sortState = {index:-1, asc:true};
+
+  const guardarDatos = () => localStorage.setItem('asistencias', JSON.stringify(datos));
+  const guardarColumnas = () => localStorage.setItem('columnasExtras', JSON.stringify(columnasExtras));
+  const alerta = (title,text,icon='success') => Swal.fire({title,text,icon, timer:1500, showConfirmButton:false});
+
+  function login() {
+  const u = document.getElementById('usuario').value.trim();
+  const c = document.getElementById('clave').value.trim();
+  const encontrado = usuarios.find(x => x.usuario === u && x.clave === c);
+
+  if (encontrado) {
+    usuarioActivo = encontrado;
+
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('logoutBtn').style.display = 'block';
+    document.getElementById('changeOwnPassBtn').style.display = 'block';
+
+    const form = document.getElementById('formControls');
+
+    // Restaurar elementos ocultos previamente (por si el lector había iniciado sesión antes)
+    form.querySelectorAll('input, button').forEach(el => el.style.display = 'inline-block');
+
+    // Mostrar botón de cambio de contraseña para admin o superadmin
+    if (usuarioActivo.rol === 'admin' || usuarioActivo.rol === 'superadmin') {
+      document.getElementById('changePasswordBtn').style.display = 'block';
+    } else {
+      document.getElementById('changePasswordBtn').style.display = 'none';
+    }
+
+    // Ocultar elementos para lector
+    if (usuarioActivo.rol === 'lector') {
+      document.getElementById('changeOwnPassBtn').style.display = 'none';
+      form.querySelectorAll('input:not(#buscador), button:not([onclick="exportarExcel()"])')
+        .forEach(el => el.style.display = 'none');
+    }
+
+    renderTabla();
+  } else {
+    alerta('Error', 'Usuario o clave incorrecta', 'error');
+  }
+}
+
+
+  function cerrarSesion(){
+    usuarioActivo=null;
+    ['app'].forEach(id=>document.getElementById(id).style.display='none');
+    ['logoutBtn','changePasswordBtn','changeOwnPassBtn'].forEach(id=>document.getElementById(id).style.display='none');
+    document.getElementById('loginScreen').style.display='flex';
+    document.getElementById('usuario').value='';
+    document.getElementById('clave').value='';
+  }
+
+  function mostrarCambioContrasena(){
+    Swal.fire({
+      title:'Cambiar contraseña a otro usuario',
+      html:`<input id="userTarget" class="swal2-input" placeholder="Usuario">
+             <input id="newPass" type="password" class="swal2-input" placeholder="Nueva contraseña">`,
+      preConfirm:()=>{
+        const usuarioCambio = document.getElementById('userTarget').value.trim();
+        const nuevoPass = document.getElementById('newPass').value.trim();
+        if(!usuarioCambio||!nuevoPass) Swal.showValidationMessage('Completa ambos campos');
+        return {usuarioCambio,nuevoPass};
+      },
+      showCancelButton:true,
+      confirmButtonText:'Guardar'
+    }).then(res=>{
+      if(!res.isConfirmed) return;
+      const {usuarioCambio,nuevoPass} = res.value;
+      if(usuarioActivo.rol==='admin' && usuarioCambio==='super') return alerta('Error','No puedes cambiar la clave del superadmin','error');
+      const user = usuarios.find(u=>u.usuario===usuarioCambio);
+      if(!user) return alerta('Error','Usuario no encontrado','error');
+      if(usuarioActivo.rol==='superadmin' || (usuarioActivo.rol==='admin' && user.rol!=='superadmin')){
+        user.clave = nuevoPass;
+        alerta('Éxito','Contraseña actualizada');
+      }else alerta('Error','Sin permisos','error');
+    });
+  }
+
+  function cambiarMiContrasena(){
+    Swal.fire({
+      title:'Cambiar mi contraseña', input:'password', inputLabel:'Nueva contraseña', showCancelButton:true,
+      inputValidator:value=>!value&&'No puede estar vacía'
+    }).then(res=>{
+      if(!res.isConfirmed) return;
+      const user = usuarios.find(u=>u.usuario===usuarioActivo.usuario);
+      user.clave = res.value;
+      alerta('Éxito','Contraseña actualizada');
+    });
+  }
+
+function agregarRegistro() {
+  const nombre = document.getElementById('nombre').value.trim();
+  const apellidoPaterno = document.getElementById('apellidoPaterno').value.trim();
+  const apellidoMaterno = document.getElementById('apellidoMaterno').value.trim();
+  const ci = document.getElementById('ci').value.trim();
+
+  if (datos.some(d => d.ci === ci)) {
+  return alerta('Duplicado', 'Ya existe un registro con ese C.I.', 'warning');
+}
+
+
+  if (!nombre || !apellidoPaterno || !apellidoMaterno || !ci)
+    return alerta('Campo vacío', 'Completa todos los campos', 'warning');
+
+  const fecha = new Date().toLocaleString();
+  datos.push({ nombre, apellidoPaterno, apellidoMaterno, ci, fecha, actividades: [] });
+  guardarDatos();
+
+  // Limpiar campos
+  document.getElementById('nombre').value = '';
+  document.getElementById('apellidoPaterno').value = '';
+  document.getElementById('apellidoMaterno').value = '';
+  document.getElementById('ci').value = '';
+
+  alerta('Agregado', 'Registro creado');
+  renderTabla();
+}
+
+
+  function eliminarRegistro(index){
+    Swal.fire({title:'¿Eliminar registro?', text:'No podrás revertir esto', icon:'warning', showCancelButton:true, confirmButtonColor:'#d33', cancelButtonColor:'#3085d6', confirmButtonText:'Sí, eliminar'}).then(res=>{
+      if(!res.isConfirmed) return;
+      datos.splice(index,1);
+      guardarDatos();
+      alerta('Eliminado','Registro borrado');
+      renderTabla();
+    });
+  }
+
+  function editarCampo(index,campo,valor){
+    datos[index][campo] = valor.trim();
+    guardarDatos();
+  }
+
+  function editarCelda(index,colIndex,valor){
+    if(!datos[index].actividades) datos[index].actividades=[];
+    datos[index].actividades[colIndex] = valor.trim();
+    guardarDatos();
+  }
+
+  function agregarColumna(){
+    Swal.fire({title:'Nueva columna', input:'text', inputPlaceholder:'Nombre', showCancelButton:true, inputValidator:v=>!v&&'No puede estar vacío'}).then(res=>{
+      if(!res.isConfirmed) return;
+      columnasExtras.push(res.value.trim());
+      guardarColumnas();
+      renderTabla();
+    });
+  }
+
+  function eliminarColumna(index){
+    Swal.fire({title:'¿Eliminar columna?', icon:'warning', showCancelButton:true, confirmButtonColor:'#d33', confirmButtonText:'Sí'}).then(res=>{
+      if(!res.isConfirmed) return;
+      columnasExtras.splice(index,1);
+      datos.forEach(d=>d.actividades?.splice(index,1));
+      guardarColumnas(); guardarDatos();
+      alerta('Eliminada','Columna borrada');
+      renderTabla();
+    });
+  }
+
+  function editarNombreColumna(index){
+    Swal.fire({title:'Editar nombre', input:'text', inputValue:columnasExtras[index], showCancelButton:true}).then(res=>{
+      if(!res.isConfirmed) return;
+      columnasExtras[index]=res.value.trim();
+      guardarColumnas();
+      renderTabla();
+    });
+  }
+
+  function buscarRegistros(){ renderTabla(document.getElementById('buscador').value.toLowerCase()); }
+
+function sortTabla(col){
+  if(sortState.index === col) {
+    sortState.asc = !sortState.asc;
+  } else {
+    sortState.index = col;
+    sortState.asc = true;
+  }
+
+  if(col === 0) {
+    // Ordenar solo por apellidoPaterno
+    datos.sort((a, b) => {
+      const va = (a.apellidoPaterno || '').toLowerCase();
+      const vb = (b.apellidoPaterno || '').toLowerCase();
+      if (va < vb) return sortState.asc ? -1 : 1;
+      if (va > vb) return sortState.asc ? 1 : -1;
+      return 0;
+    });
+  } else {
+    datos.sort((a,b) => {
+      let va,vb;
+      if(col === 1) { va = a.ci.toLowerCase(); vb = b.ci.toLowerCase(); }
+      else if(col === 2) { va = a.fecha; vb = b.fecha; }
+      else { va = a.actividades?.[col-3] || ''; vb = b.actividades?.[col-3] || ''; }
+      if(va < vb) return sortState.asc ? -1 : 1;
+      if(va > vb) return sortState.asc ? 1 : -1;
+      return 0;
+    });
+  }
+  
+  renderTabla(document.getElementById('buscador').value.toLowerCase());
+}
+
+
+function renderTabla(filtro = '') {
+  const encabezado = document.querySelector('thead tr');
+  const cuerpo = document.getElementById('cuerpo');
+
+  encabezado.innerHTML = `
+  <th onclick="sortTabla(1)">Apellido Paterno</th>
+  <th onclick="sortTabla(2)">Apellido Materno</th>
+    <th onclick="sortTabla(0)">Nombre</th>
+    <th onclick="sortTabla(3)">C.I.</th>
+    <th onclick="sortTabla(4)">Hora/Fecha</th>
+    ${columnasExtras.map((col, i) => `
+      <th>${col} 
+        ${usuarioActivo.rol !== 'lector' ? `
+          <button onclick="editarNombreColumna(${i})">✏️</button>
+          <button onclick="eliminarColumna(${i})">❌</button>` : ''}
+      </th>`).join('')}
+    <th>Acciones</th>`;
+
+  cuerpo.innerHTML = '';
+
+
+  datos.sort((a, b) => a.apellidoPaterno.localeCompare(b.apellidoPaterno));
+
+  datos.forEach((item, index) => {
+    const filtroTexto = `${item.nombre} ${item.apellidoPaterno} ${item.apellidoMaterno} ${item.ci}`.toLowerCase();
+    if (!filtroTexto.includes(filtro)) return;
+
+    let fila = `<tr>
+      <td contenteditable="${usuarioActivo.rol !== 'lector'}" onblur="editarCampo(${index},'apellidoPaterno',this.innerText)">${item.apellidoPaterno}</td>
+      <td contenteditable="${usuarioActivo.rol !== 'lector'}" onblur="editarCampo(${index},'apellidoMaterno',this.innerText)">${item.apellidoMaterno}</td>
+      <td contenteditable="${usuarioActivo.rol !== 'lector'}" onblur="editarCampo(${index},'nombre',this.innerText)">${item.nombre}</td>
+      <td contenteditable="${usuarioActivo.rol !== 'lector'}" onblur="editarCampo(${index},'ci',this.innerText)">${item.ci}</td>
+      <td>${item.fecha}</td>`;
+
+    columnasExtras.forEach((c, i) => {
+      fila += `<td contenteditable="${usuarioActivo.rol !== 'lector'}" onblur="editarCelda(${index},${i},this.innerText)">${item.actividades?.[i] || ''}</td>`;
+    });
+
+    fila += `<td class="actions">${usuarioActivo.rol !== 'lector' ? `<button onclick="eliminarRegistro(${index})">🗑️</button>` : ''}</td></tr>`;
+    cuerpo.innerHTML += fila;
+  });
+}
+
+function exportarExcel() {
+  const headers = ['Apellido Paterno', 'Apellido Materno', 'Nombre', 'C.I.', 'Fecha/Hora', ...columnasExtras];
+  const rows = datos.map(d => [
+    d.apellidoPaterno, d.apellidoMaterno, d.nombre, d.ci, d.fecha,
+    ...(d.actividades || [])
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Registros");
+  XLSX.writeFile(wb, "control_asistencia.xlsx");
+}
+
+  
+</script>
+</body>
+</html>
